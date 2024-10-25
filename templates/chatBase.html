@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat UI</title>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    #input{
+      background-color: #d7dadb;
+      padding: 20px;
+      border-radius: 0px 20px 20px;
+    }
+    #output{
+      background-color: #0cbaf9bd;
+      padding: 20px;
+      border-radius: 0px 20px 20px;
+    }
+    .sidebar {
+      width: 20%;
+      background-color: #020743;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+    }
+    .username {
+      font-weight: bold;
+      color: white;
+      display: block;
+    }
+    .chat-header {
+      padding: 10px;
+      background-color: #d9f5ff;
+      text-align: center;
+      font-size: 18px;
+      background-color: #020743;
+      font-weight: bold;
+    }
+    .chat-header {
+      padding: 10px;
+      background-color: #d9f5ff;
+      text-align: center;
+      font-size: 18px;
+      background-color: #020743;
+      font-weight: bold;
+      color: white;
+
+    }
+    .chat-item {
+    color: rgb(255, 255, 255);
+}
+    
+  </style>
+  <script>
+    function Voice(text){
+      fetch(`/play1?text=${encodeURIComponent(text)}`)
+    }
+    $(document).ready(function () {
+      // Fetch text from Django view
+      $('#fetchText').click(function (e) {
+        e.preventDefault();
+        $.ajax({
+          url: '/get-text',
+          type: 'GET',
+          success: function (response) {
+            console.log('Received text:', response); // Debug log
+            $('#input_text').val(response.text);
+          },
+          error: function (xhr, status, error) {
+            console.error('Error fetching data:', error);
+            alert('Failed to fetch text from server.');
+          }
+        });
+      });
+
+      // Image preview logic
+    $('#image').on('change', function (event) {
+        const [file] = event.target.files;
+        if (file) {
+          $('#displayImage').attr('src', URL.createObjectURL(file)).show();
+        } else {
+          console.log('No file selected');
+          $('#displayImage').hide();
+        }
+      });
+    });
+
+    // CSRF token helper function
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Display user input in the chat container
+    function userinput() {
+      const val1 = $('#input_text').val().trim();
+      if (val1) {
+        $('#container').append(`<p id="input">${val1}</p>`);
+      } else {
+        alert('Please enter some text.');
+      }
+    }
+
+    // Submit the form using AJAX
+    function submitForm() {
+      const formData = new FormData();
+      formData.append('input_text', $('#input_text').val());
+      const fileInput = $('#image')[0].files[0];
+      if (fileInput) formData.append('image', fileInput);
+
+      $.ajax({
+        url: '/process_input',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        success: function (response) {
+          console.log('Server response:', response); // Debug log
+          const message = response.output_text;
+          $('#container').append(`<p id="output">${message}</p>`);
+          Voice(message);++999999999999999
+          $('#chat-body').scrollTop($('#chat-body')[0].scrollHeight); // Auto-scroll
+        },
+        error: function (xhr, status, error) {
+          console.error('Error:', xhr.responseJSON);
+          alert('Failed to process input. Check server logs.');
+        }
+      });
+    }
+  </script>
+</head>
+
+<body>
+  <div class="chat-container">
+    <div class="sidebar">
+      <div class="user-profile">
+        <img src="https://via.placeholder.com/50" alt="Profile Picture">
+        <div>
+          <span class="username">Natasya Ciel</span>
+          <div class="status active">
+            <i class="fas fa-circle"></i> Active
+          </div>
+        </div>
+      </div>
+      <div class="search-bar">
+        <a href="#">+ Add Chat</a>
+      </div>
+      <div class="chat-list">
+        <div class="chat-item active">
+          <i class="fas fa-user"></i>
+          <a href="">Tamara</a>
+          <a href=""></a>
+          <!-- <span class="typing">Typing...</span>
+          <span class="typing">Typing...</span> -->
+        </div>
+        <div class="chat-item">
+          <i class="fas fa-user"></i> Fashion Lover
+        </div>
+        <div class="chat-item">
+          <i class="fas fa-user"></i> Zahra
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-window">
+      <div class="chat-header">snapAi</div>
+      <div class="chat-body" id="chat-body">
+        <center>
+          <img id="displayImage" style="max-width: 300px; display: none;">
+        </center>
+        <div id="container"></div>
+      </div>
+        <!-- fill content -->
+        {% block content %}
+
+
+        {% endblock %}
+
+        <!-- fill content -->
+      <div class="chat-footer">
+        <input type="text" id="input_text" placeholder="Type your message..." aria-label="Chat input">
+        <input type="file" id="image" accept="image/*" aria-label="Upload image">
+        <button id="fetchText">Voice</button>
+        <button onclick="event.preventDefault(); submitForm(); userinput();">Submit</button>
+      </div>
+    </div>
+
+    <div class="contact-info">
+      <img src="https://via.placeholder.com/100" alt="Tamara's Profile Picture">
+      <h3
+      style="text-align: center;
+
+      ">Tamara</h3>
+      <h3> Username </h3>
+      <p>@Tamara_Cia</p>
+      <h3> Contct</h3>
+
+      <p><i class="fas fa-phone"></i> +62 838 3441 0809</p>
+      <h3>E-mail</h3>
+      <p><i class="fas fa-envelope"></i> tamara@gmail.com</p>
+      <div class="shared-files">
+        <br>
+        <h4>Shared Files</h4>
+        <ul>
+          <li><i class="fas fa-file-alt"></i> Documents (10MB)</li>
+          <li><i class="fas fa-image"></i> Images (125MB)</li>
+          <li><i class="fas fa-video"></i> Videos (510MB)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

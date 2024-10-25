@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Query Chatbot</title>
+</head>
+<body>
+    <h1>Image Query Chatbot</h1>
+    <form action="/algo" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="image">Upload Image:</label>
+        <!-- <input type="file" name="image" id="image"> -->
+        <input type="file" id="imageInput" name="image" accept="image/*">
+        <label for="user_text">Enter Text:</label>
+        <input type="text" name="user_text" id="user_text">
+        
+        <button type="submit">Submit</button>
+    </form>
+    <img id="displayImage" style="max-width: 300px; display: none;">
+
+    <script>
+        document.getElementById('imageInput').onchange = function(event) {
+            const [file] = event.target.files;
+            if (file) {
+                document.getElementById('displayImage').src = URL.createObjectURL(file);
+                document.getElementById('displayImage').style.display = 'block';
+            }
+        };
+    </script>
+
+</body>
+</html>
